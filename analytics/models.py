@@ -15,6 +15,17 @@ class Ticker(models.Model):
 
     def __str__(self):
         return f"{self.datetime}-{self.bid}-{self.ask}-{self.volume}/{self.product_code}"
+    
+    @property
+    def middle(self):
+        return (self.bid + self.ask) / 2
+
+    @property
+    def truncateTime(self):
+        time = self.datetime
+        # 1minでtruncate
+        time_truncate_1m = time.replace(second=0, microsecond=0)
+        return time_truncate_1m
 
 
 class Ticker_Minute_USD_JPY(models.Model):
@@ -25,20 +36,6 @@ class Ticker_Minute_USD_JPY(models.Model):
     low = models.FloatField(verbose_name="最低値", null=False, blank=False)
     volume = models.IntegerField(verbose_name="ティック数", null=False, blank=False)
     
-    # 区切りの良い時間(1m,5m,15m,30m,60m)でtruncateする
-    '''@property
-    def truncateTime(self):
-        time = self.time
-        time_truncate_1m = time.replace(second=0, microsecond=0)
-        return time_truncate_1m
+    def __str__(self):
+        return f"{self.time}-{self.open}-{self.close}-{self.high}-{self.low}-{self.volume}"
 
-
-    # 2020-01-02 03:04:27
-    # 2020-01-02 03:04:25(5s)
-    # 2020-01-02 03:04:00(1M)
-    # 2020-01-02 03:00:00(1H)
-
-    @property
-    def value(self):
-        # {"bid","ask","time":{"1m", "5m", "15m", "30m", "60m"}}
-        return dict(middle=(self.ask+self.bid)/2, time=self.truncateTime)'''

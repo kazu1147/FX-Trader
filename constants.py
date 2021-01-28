@@ -48,7 +48,7 @@ class APIClient(object):
                     volume = 1
                     ticker = Ticker(product_code=instrument, datetime=timestamp, bid=bid, ask=ask, volume=volume)
                     # callbackにtickerを渡す->mainに用意したcallback関数が都度呼ばれる
-                    callback(self, ticker)
+                    callback(ticker)
 
         except V20Error as e:
             raise

@@ -51,3 +51,23 @@ LOG:  could not receive data from client: An existing connection was forcibly cl
 	
 LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
 	
+LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+LOG:  server process (PID 27836) was terminated by exception 0xC000013A
+HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+LOG:  terminating any other active server processes
+WARNING:  terminating connection because of crash of another server process
+DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
+HINT:  In a moment you should be able to reconnect to the database and repeat your command.
+LOG:  statistics collector process (PID 21732) was terminated by exception 0xC000013A
+HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+LOG:  all server processes terminated; reinitializing
+LOG:  database system was interrupted; last known up at 2021-01-27 23:43:20 JST

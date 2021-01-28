@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from analytics.models import Ticker
+from analytics.models import Ticker, Ticker_Minute_USD_JPY
 from constants import APIClient, ACCESS_TOKEN, ACCOUNT_ID, PRODUCT_CODE
 
 
@@ -8,20 +8,45 @@ class Command(BaseCommand):
     # python manage.py help count_entryで表示されるメッセージ
     help = ''
 
-    # コマンドライン引数を指定します。(argparseモジュール https://docs.python.org/2.7/library/argparse.html)
-    # 今回は無し
-    # def add_arguments(self, parser):
-    # parser.add_argument('blog_id', nargs='+', type=int)
+    def __init__(self, stdout=None, stderr=None, no_color=False, force_color=False):
+        super().__init__(stdout=None, stderr=None, no_color=False, force_color=False)
+        self.api = APIClient(ACCESS_TOKEN, ACCOUNT_ID, PRODUCT_CODE)
+        self.ticker_1min = Ticker_Minute_USD_JPY()
+        self.ticker_1min.time = None
 
     # コマンドが実行された際に呼ばれるメソッド
     def handle(self, *args, **options):
-        # product_codeを設定する(USD_JPY等)
-        api = APIClient(ACCESS_TOKEN, ACCOUNT_ID, PRODUCT_CODE)
-
         # リアルタイムでtickerデータを取得=>callbackでdbに格納
-        api.get_realtime_ticker(callback=self.push_db)
+        self.api.get_realtime_ticker(callback=self.push_db)
 
-    @ staticmethod
     def push_db(self, ticker: Ticker):
-        # truncateする => まずは1min
-        print(ticker)
+        middle_val = ticker.middle
+        # truncateした時間を取得 => 現状1minのみ
+        time_val = ticker.truncateTime
+
+        # 初期状態
+        if self.ticker_1min.time is None:
+            self.ticker_1min.time = time_val
+            self.ticker_1min.open = middle_val
+            self.ticker_1min.high = middle_val
+            self.ticker_1min.low = middle_val
+            self.ticker_1min.volume = 0
+        # 同じtermの場合
+        elif self.ticker_1min.time == time_val:
+            if self.ticker_1min.high < middle_val:
+                self.ticker_1min.high = middle_val
+            if self.ticker_1min.low > middle_val:
+                self.ticker_1min.low = middle_val
+            self.ticker_1min.volume += 1
+        # termが変化するタイミング
+        else:
+            self.ticker_1min.close = middle_val
+            self.ticker_1min.volume += 1
+            self.ticker_1min.save()
+            print(self.ticker_1min)
+            self.ticker_1min = Ticker_Minute_USD_JPY()
+            self.ticker_1min.time = time_val
+            self.ticker_1min.open = middle_val
+            self.ticker_1min.high = middle_val
+            self.ticker_1min.low = middle_val
+            self.ticker_1min.volume = 0
