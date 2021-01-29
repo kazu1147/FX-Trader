@@ -17,7 +17,8 @@ ENVIRONMENT = conf["os"]["environment"]
 ACCESS_TOKEN = conf["oanda"]["access_token"]
 ACCOUNT_ID = conf["oanda"]["account_id"]
 PRODUCT_CODE = conf["oanda"]["product_code"]
-
+HOST = conf["os"]["host"]
+PORT = conf["os"]["port"]
 
 class APIClient(object):
     def __init__(self, access_token, account_id, product_code, environment=ENVIRONMENT):

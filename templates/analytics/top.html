@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/datatables.min.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+    <style>
+        #g_navi ul {
+            overflow: hidden;
+            margin: 0 auto;
+            padding: 0 3%;
+            width: 94%;
+            max-width: 960px;
+        }
+        #g_navi ul li {
+            position: relative;
+            float: left;
+            width: 20%;
+        }
+		#g_navi ul li a {
+	 		display: block;
+			padding: 17px 5%;
+			width: 90%;
+			color: #fff;
+			text-align: center;
+			text-decoration: none;
+		}
+
+		.main-box{
+		    background-color: #000;
+		}
+
+		#chart_div{
+		    width: 100%;
+		    height: 600px;
+		}
+
+		.button_area{
+		    text-align: center;
+		}
+    </style>
+    <div class="main-box">
+        <div class="nav-box">
+            <nav id="g_navi">
+                <ul>
+                    <li><a href="/">ホーム</a></li>
+                    <li><a href="/concept">分析</a></li>
+                    <li><a href="/menu">予測</a></li>
+                    <li><a href="/access">テスト</a></li>
+                    <li><a href="/contact">お問い合わせ</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div id="chart_div"></div>
+    </div>
+
+    <script>
+        var data;
+        var chart_data;
+        var chart;
+        var position = 0;
+
+        const btn_div_html = "<div class='button_area' style='position: absolute; top: 60px; z-index: 1000000'>" +
+                            "<input type='button' id='btn_left' value='<'>" +
+                            "<input type='button' id='btn_right' value='>'>" +
+                            "</div>";
+
+        /* google chart描画時やselect、mouseover時に呼ぶ関数 */
+        const set_bar_color = function () {
+            const chartElement = document.getElementById('chart_div');
+            const fallingCandles = chartElement.querySelectorAll('rect[fill="#a52714"]');
+            fallingCandles.forEach(function (e) {
+                e.previousSibling.style.fill = '#a52714';
+            });
+            const risingCandles = chartElement.querySelectorAll('rect[fill="#0f9d58"]');
+            risingCandles.forEach(function (e) {
+                e.previousSibling.style.fill = '#0f9d58';
+            });
+        };
+
+        /* google chartの描画が完了したタイミングで呼ばれる関数 */
+        const onReady = function (){
+            /* 重ね書き部分 */
+            $('div[dir="ltr"]').prepend(btn_div_html);
+            set_bar_color();
+
+            /* google chartの更新(手動) */
+            // 右側を選択すると-1, 左側を選択すると+1
+            $('#btn_left').on('click', function(){
+                console.log("a")
+                position+=1;
+                drawLineChart();
+            })
+
+            $('#btn_right').on('click', function(){
+                if(position > 0){
+                    position-=1;
+                    drawLineChart();
+                }
+            })
+        };
+
+        const options = {
+            selectionMode: 'single',
+            legend:'none',
+            tooltip: {trigger: 'focus'},
+            aggregationTarget: 'none',
+            axisTitlesPosition: 'out',
+            backgroundColor: { fill: '#000' },
+            candlestick: {
+                fallingColor: {strokeWidth: 0, fill: '#a52714'}, // red
+                risingColor: { strokeWidth: 0, fill: '#0f9d58'},  // green
+            },
+
+            focusTarget: 'category',
+            hAxis: {
+
+            },
+
+        };
+
+        var chatSocket = new WebSocket(
+                "ws://"
+                + "{{ host }}:{{ port }}"
+                + '/ws/notifications/'
+                + "1min"
+                + '/'
+        );
+
+        /* google chartの更新(リアルタイム更新) */
+        chatSocket.onmessage = function(e) {
+            let get_data = JSON.parse(e.data)
+            let type = get_data['type']
+            console.log(type)
+            if (type=="notify"){
+                if (position != 0){
+                    position += 1
+                    return;
+                }
+                let chart_data = get_data['content']
+                console.log(chart_data)
+                _ = data.shift()
+                data.push(chart_data)
+                chart_data = google.visualization.arrayToDataTable(data, true);
+                chart.draw(chart_data, options);
+            }
+        };
+
+        /* google chart APIを利用するための設定 */
+        function init_google_API(){
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(chart_init);
+        };
+
+        /* google chartの内容を初期化する際 */
+        function chart_init(){
+            chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
+            google.visualization.events.addListener(chart, 'ready', onReady);
+            google.visualization.events.addListener(chart, 'onmouseover', set_bar_color);
+            google.visualization.events.addListener(chart, 'select', set_bar_color);
+            drawLineChart();
+        };
+
+        function drawLineChart() {
+            console.log(position)
+            $.ajax({
+                type: "GET",
+                dataType: "json",
+                url: "{% url 'api_v1:get_real_candle' %}",
+                data:{
+                    "position": position,
+                }
+            })
+            /*通信成功*/
+            .done(function(response, textStatus, jqXHR){
+                json= JSON.stringify(response);
+                json =  JSON.parse(json);
+
+                // データフォーマット('xラベル', 'min', 'open', 'close', 'max')
+                data = json["data"]
+                var chart_data = google.visualization.arrayToDataTable(json["data"], true);
+                chart.draw(chart_data, options);
+            })
+            .fail(function(jqXHR, textStatus, errorThrown){
+                alert("通信に失敗しました。ネットワーク環境を整えてください。")
+            });
+        }
+
+        /* 画面がリサイズされた時 */
+        // onReSizeイベント
+        window.onresize = function(){
+            drawLineChart();
+        }
+
+        init_google_API();
+    </script>
+</body>
+</html>

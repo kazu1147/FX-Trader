@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.db import models
 from django.utils import timezone
 
@@ -39,3 +41,24 @@ class Ticker_Minute_USD_JPY(models.Model):
     def __str__(self):
         return f"{self.time}-{self.open}-{self.close}-{self.high}-{self.low}-{self.volume}"
 
+    @property
+    def local_time_str(self):
+        time = localtime(self.time)
+        return f"{time.hour}:{time.minute}"
+
+    # ['日付文字列', 'low', 'open', 'close', 'high']の配列を返す
+    def to_array(self):
+        return [self.local_time_str, self.low, self.open, self.close, self.high]
+
+    # データ格納時にweb socket通信
+    def save(self, *args, **kwargs):
+        ret = super().save(*args, **kwargs)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "1min",
+            {
+                "type": "notify",
+                "content": self.to_array()
+            }
+        )
+        return ret
