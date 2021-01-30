@@ -10,7 +10,7 @@ from analytics.models import Ticker_Minute_USD_JPY
 class RealCandleAPIView(views.APIView):
     def get(self, request):
         prev = int(request.GET.get('position'))
-        next = 20 + prev
+        next = 40 + prev
 
         candle_data = list(map(lambda x: x.to_array(), Ticker_Minute_USD_JPY.objects.all().order_by('-id')[prev:next]))
         candle_data.reverse()

@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/datatables.min.css"/>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    
 </head>
 <body>
     <style>
+        body{
+            background: #000;
+        }
+
         #g_navi ul {
             overflow: hidden;
             margin: 0 auto;
@@ -40,6 +46,15 @@
 
 		.button_area{
 		    text-align: center;
+		    position: absolute;
+		    bottom: 20%;
+		    width: 100%;
+		    z-index: 1000000;
+		}
+
+		.button_area input{
+		    margin: 0px 2.5%;
+		    cursor:pointer;
 		}
     </style>
     <div class="main-box">
@@ -63,7 +78,7 @@
         var chart;
         var position = 0;
 
-        const btn_div_html = "<div class='button_area' style='position: absolute; top: 60px; z-index: 1000000'>" +
+        const btn_div_html = "<div class='button_area'>" +
                             "<input type='button' id='btn_left' value='<'>" +
                             "<input type='button' id='btn_right' value='>'>" +
                             "</div>";
@@ -106,7 +121,7 @@
         const options = {
             selectionMode: 'single',
             legend:'none',
-            tooltip: {trigger: 'focus'},
+            tooltip: {trigger: 'none'}, // focus
             aggregationTarget: 'none',
             axisTitlesPosition: 'out',
             backgroundColor: { fill: '#000' },
@@ -117,7 +132,7 @@
 
             focusTarget: 'category',
             hAxis: {
-
+                textStyle: {color: '#444444'}
             },
 
         };
@@ -159,7 +174,9 @@
         function chart_init(){
             chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
             google.visualization.events.addListener(chart, 'ready', onReady);
+            // 下記を追加する事でtriggerイベントでなぜか青のbarが表示される問題を解決
             google.visualization.events.addListener(chart, 'onmouseover', set_bar_color);
+            google.visualization.events.addListener(chart, 'onmouseout', set_bar_color);
             google.visualization.events.addListener(chart, 'select', set_bar_color);
             drawLineChart();
         };
