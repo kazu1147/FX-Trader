@@ -39,7 +39,7 @@ class Ticker_Minute_USD_JPY(models.Model):
     volume = models.IntegerField(verbose_name="ティック数", null=False, blank=False)
     
     def __str__(self):
-        return f"{self.time}-{self.open}-{self.close}-{self.high}-{self.low}-{self.volume}"
+        return f"{localtime(self.time)}-{self.open}-{self.close}-{self.high}-{self.low}-{self.volume}"
 
     @property
     def local_time_str(self):

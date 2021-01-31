@@ -50,7 +50,8 @@ class Command(BaseCommand):
             self.api.request(r)
             candle_lst = r.response.get('candles')
             candle_lst = list(map(self.candle_dic_to_ticker_obj, candle_lst))
-            print(candle_lst)
+            self.res.extend(candle_lst)
+        Ticker_Minute_USD_JPY.objects.bulk_create(self.res)
 
     @staticmethod
     def candle_dic_to_ticker_obj(x: dict) -> Ticker_Minute_USD_JPY:
